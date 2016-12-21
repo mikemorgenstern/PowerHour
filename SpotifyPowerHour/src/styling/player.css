@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css?family=Athiti:600|Cabin:500|Josefin+Sans:600|Lobster|Molle:400i|Pacifico');
+
+.playbox {
+    font-family: 'Cabin';
+    color: #1DB954;
+    font-size: 0.6em
+}
+
+.playbox-border {
+    width:65%;
+    margin-right: auto;
+    margin-left: auto;
+    background-color: black;
+    opacity: 0.8;
+    border: 1px outset white;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    vertical-align: middle;
+    border-radius: 30px;
+    /* -moz-box-shadow: 4px 4px 4px 4px white;
+	-webkit-box-shadow: 4px 4px 4px 4px white;
+	box-shadow: 4px 4px 4px 4px white; */
+}
+
+.nowplaying {
+    width: 30%;
+    padding-left: 20px;
+    padding-bottom: 20px;
+    border-right: 1px white;
+    float: left;
+}
+
+.song-details {
+    text-align: center;
+}
