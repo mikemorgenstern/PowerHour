@@ -3,20 +3,22 @@
 .playbox {
     font-family: 'Cabin';
     color: #1DB954;
-    font-size: 0.6em
+    font-size: 20px;
 }
 
 .playbox-border {
-    width:65%;
+    width:55%;
     margin-right: auto;
     margin-left: auto;
     background-color: black;
     opacity: 0.8;
-    border: 1px outset white;
-    padding-bottom: 10px;
+    border: 3px outset white;
+    padding-bottom: 5px;
     padding-top: 10px;
     vertical-align: middle;
-    border-radius: 30px;
+    border-radius: 10px;
+    overflow: hidden;
+
     /* -moz-box-shadow: 4px 4px 4px 4px white;
 	-webkit-box-shadow: 4px 4px 4px 4px white;
 	box-shadow: 4px 4px 4px 4px white; */
@@ -25,11 +27,14 @@
 .nowplaying {
     width: 30%;
     padding-left: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 5px;
     border-right: 1px white;
     float: left;
 }
 
 .song-details {
     text-align: center;
+    overflow: hidden;
+    padding-bottom: 10px;
+    padding-right: 5px;
 }

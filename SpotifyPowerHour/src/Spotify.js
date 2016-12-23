@@ -43,7 +43,7 @@ var getPlaylists = function () {
     return fetch('https://api.spotify.com/v1/me/playlists', {
       method: 'get',
       headers: {
-        'Authorization': 'Bearer '+ ,
+        'Authorization': 'Bearer '  // + , ??
         },
       }).then(function(res) {
           return res.json()
