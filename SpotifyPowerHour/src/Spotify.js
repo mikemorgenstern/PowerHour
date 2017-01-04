@@ -1,5 +1,7 @@
-import fetch from 'isomorphic-fetch'
-
+import fetch from 'isomorphic-fetch';
+import { bearerToken } from './components/main.js'
+var lightningBoltImage = require('./imgs/lightningBolt.png')
+//var bearerToken = 'BQD8nYLkvDWrOBfx5nOuKS3wRZFw5E_v23_qIGczL6F3Kx1FK778a1Zj8c2hgaU1ZMTDXlMMJdUjYY-PCwAM0v6W_jG55c3yv8NyBboYbwqwaIOlBtfmVL21BmOJKGd1mASu784qJXo8a2Uk5WKD6KzklSunwAxPrTIaB0MhKEhV9ZSWu3GoL0k'
 function checkStatus(response) {
   if(response.ok) {
     return response;
@@ -27,23 +29,39 @@ function enhancedFetch(url, options) {
     .then(parseJSON);
 }
 
+//end data sctructure
 var spotifyData = {
-  songs:[
-    {name:'amazing', artist:'Kanye', popularity:53, id: 2934385},
-    {name:'Roses', Artist: 'OutKast',popularity:60, id: 4589015}
-  ],
+  songs:[],
   playlists:[]
 }
 
-//bearerToken will be aquired through regex & window.hash
-var bearerToken = 'BQDjfod-EoFrM4hFk6d-0g5uVkDo6EY3NVhqZMp2RfehyH40PCYrtdXQGRRsaSkqMqmLCPvmbk6sIDN6sIApgLqdepgkStYH3hrtp6uUVHad8yfjmMI8dOcLvy-m3rAPybF0HX-384xGA3FZPac3yQc0HdeJTNgoer0DMUfW1-zQupM4Aq6pjLI'
+exports.exportedSpotifyData = spotifyData
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
 
 //returns json format of users playlists
 var getPlaylists = function () {
     return fetch('https://api.spotify.com/v1/me/playlists', {
       method: 'get',
       headers: {
-        'Authorization': 'Bearer '  // + , ??
+        'Authorization': 'Bearer '+ bearerToken,
         },
       }).then(function(res) {
           return res.json()
@@ -52,7 +70,7 @@ var getPlaylists = function () {
 
 //saves playlists and playlist ids to spotifyData
 var storePlaylists = function (playListData) {
- for (var i=0;i<playListData.items.length;i++) {
+ for (var i = 0; i < playListData.items.length;i++) {
   var id = playListData.items[i].id
   var name = playListData.items[i].name
   var songs = playListData.items[i].tracks.href
@@ -62,63 +80,119 @@ var storePlaylists = function (playListData) {
 }
 
 //makes api call for songs each playlist and then runs a for loop through each promise to retrieve song info
-var getSongs = function (spotifydata) {
+var getSongs = function(data) {
+ return Promise.all(data.playlists.map(function(playlist) {
+   return enhancedFetch(playlist.songs, {
+     method: 'get',
+     headers: {
+       'Authorization': 'Bearer ' + bearerToken,
+     },
+   })
+ })).then(function(resolvedSongLists) {
+   resolvedSongLists.forEach(function(resolvedSongs)  {
+     spotifyData.songs = spotifyData.songs.concat(resolvedSongs.items.map((song) => ({
+       name: song.track.name,
+       popularity: song.track.popularity,
+       artist: song.track.artists[0].name,
+       id: song.track.id,
+       albumArt: song.track.album.images[0] ? song.track.album.images[0].url : "http://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png"
+     })));
+   })
+   return spotifyData;
+ });
+}
 
-  for (var i = 0 ; i < spotifydata.playlists.length ; i++) {
-
-    enhancedFetch(spotifydata.playlists[i].songs, {
-      method: 'get',
-      headers: {
-        'Authorization': 'Bearer '+ bearerToken,
-        },
-      }).then(function(res) {
-        for (var j = 0; j<res.items.length; j++) {
-          var name = res.items[j].track.name
-          var popularity = res.items[j].track.popularity
-          var artist = res.items[j].track.artists[0].name
-          var id = res.items[j].track.id
-          spotifyData.songs.push({ name:name, artist:artist, popularity:popularity, id:id })
-        }
-      })
-    }
-  }
 
 //calculates average popularity of users songs
-var getAvgPopularity = function (playlist) {
+var getAvgPopularity = function (data) {
   var popsum = 0
-  for (var i = 0; i < playlist.length; i++) {
-      popsum += playlist[i].popularity;
+  for (var i = 0; i < data.songs.length; i++) {
+      popsum += data.songs[i].popularity;
   };
-  return (popsum / playlist.length)
+  return (popsum / data.songs.length)
 }
 
 //{eventually will} filter out unpopular songs from users spotifyData
-var getNewPlaylist = function(playlist) {
-  var popcutoff = getAvgPopularity(playlist) + 10
-  for (var i = (playlist.length-1); i >= 0; i--) {
-    if (playlist[i].popularity < popcutoff) {
-        playlist.splice(i, 1)
+var getNewPlaylist = function(data) {
+  var popcutoff = getAvgPopularity(data) + 10
+  for (var i = (data.songs.length - 1); i >= 0; i--) {
+    if (data.songs[i].popularity < popcutoff) {
+        data.songs.splice(i, 1)
       }
-  }
-  return playlist
+   }
+  spotifyData.songs.splice(100)
+  spotifyData.songs = shuffle(spotifyData.songs)
 }
 
 //retrieves info like energy and bpm for each track in newly filtered song list
-var getTrackInfo = function () {
-    return fetch('https://api.spotify.com/v1/audio-features/?ids=2gZUPNdnz5Y45eiGxpHGSc', {
-      method: 'get',
-      headers: {
-        'Authorization': 'Bearer '+ bearerToken,
-        },
-      }).then(function(res) {
-          return res.json()
-        })
-      }
-      
+var getTrackInfo = function (data) {
+  var link = 'https://api.spotify.com/v1/audio-features/?ids='
+
+  for (var i = 0; i < 100; i++ ) {
+    if (i === 0) {
+      link = link + data.songs[i].id
+    }
+    else {
+      link = link + "," + data.songs[i].id
+    }
+  }
+
+  fetch(link, {
+    method: 'get',
+    headers: {
+      'Authorization': 'Bearer '+ bearerToken,
+      },
+    }).then(function(res) {
+        return(res.json())
+      }).then(function(json) {
+        for (var j = 0; j < 100; j++) {
+          var energy = json.audio_features[j].energy
+          data.songs[j].energy = energy
+        }
+      })
+    }
+
+var sortEnergy = function (data) {
+  data.songs.sort(function(a, b) {
+    return parseFloat(a.price) - parseFloat(b.price);
+  });
+}
+
+var promise = new Promise(function(resolve, reject) {
+    resolve(spotifyData);
+  })
+
 //sets off all previous calls
+exports.retrieveData = function () {
 getPlaylists().then(function(data) {
-  var spotifydata = storePlaylists(data);
-  getSongs(spotifydata);
-  var newPlaylist = getNewPlaylist(spotifyData.songs);
-  //final action is to collect track info on newPlaylist through the getTrackInfo funciton
+
+storePlaylists(data)
+return promise
+
+}).then(function(data) {
+
+return getSongs(data)
+return promise
+
+}).then(function(data) {
+
+getNewPlaylist(data)
+return promise
+
+}).then(function(data) {
+
+getTrackInfo(data)
+return promise
+
 })
+}
+
+
+/*.then(function(data) {
+
+sortEnergy(data)
+return promsie
+})
+*/
+
+//setTimeout(function () {console.log(spotifyData.songs)},10000)

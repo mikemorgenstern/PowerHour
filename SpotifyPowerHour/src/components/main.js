@@ -6,71 +6,24 @@ import Player from './player.js';
 import Button from './button.js';
 import Timer from './timer.js';
 import Queue from './queue.js';
-//import SpotifyData from '../Spotify.js';
-
-
-// mock data to use in player until spotify data is linked up
-var SpotifyData = [
-    {name: "never gonna give you up enver gonna let you down", artist: "rick astley", popularity: 50},
-    {name: "coco butter kisses", artist: "chance the rapper", popularity: 80},
-    {name: "otis", artist: "kanye", popularity: 60},
-    {name: "everybody", artist: "backstreet boys", popularity: 40},
-    {name: "gangnam style", artist: "psy", popularity: 75},
-    {name: "in the air tonight", artist: "phil collins", popularity: 45},
-    {name: "let it snow", artist: "michael buble", popularity: 30},
-    {name: "last resort", artist: "papa roach", popularity: 50},
-    {name: "never gonna give you up enver gonna let you down", artist: "rick astley", popularity: 50},
-    {name: "coco butter kisses", artist: "chance the rapper", popularity: 80},
-    {name: "otis", artist: "kanye", popularity: 60},
-    {name: "everybody", artist: "backstreet boys", popularity: 40},
-    {name: "gangnam style", artist: "psy", popularity: 75},
-    {name: "in the air tonight", artist: "phil collins", popularity: 45},
-    {name: "let it snow", artist: "michael buble", popularity: 30},
-    {name: "last resort", artist: "papa roach", popularity: 50},
-    {name: "never gonna give you up enver gonna let you down", artist: "rick astley", popularity: 50},
-    {name: "coco butter kisses", artist: "chance the rapper", popularity: 80},
-    {name: "otis", artist: "kanye", popularity: 60},
-    {name: "everybody", artist: "backstreet boys", popularity: 40},
-    {name: "gangnam style", artist: "psy", popularity: 75},
-    {name: "in the air tonight", artist: "phil collins", popularity: 45},
-    {name: "let it snow", artist: "michael buble", popularity: 30},
-    {name: "last resort", artist: "papa roach", popularity: 50},
-    {name: "never gonna give you up enver gonna let you down", artist: "rick astley", popularity: 50},
-    {name: "coco butter kisses", artist: "chance the rapper", popularity: 80},
-    {name: "otis", artist: "kanye", popularity: 60},
-    {name: "everybody", artist: "backstreet boys", popularity: 40},
-    {name: "gangnam style", artist: "psy", popularity: 75},
-    {name: "in the air tonight", artist: "phil collins", popularity: 45},
-    {name: "let it snow", artist: "michael buble", popularity: 30},
-    {name: "last resort", artist: "papa roach", popularity: 50},
-    {name: "never gonna give you up enver gonna let you down", artist: "rick astley", popularity: 50},
-    {name: "coco butter kisses", artist: "chance the rapper", popularity: 80},
-    {name: "otis", artist: "kanye", popularity: 60},
-    {name: "everybody", artist: "backstreet boys", popularity: 40},
-    {name: "gangnam style", artist: "psy", popularity: 75},
-    {name: "in the air tonight", artist: "phil collins", popularity: 45},
-    {name: "let it snow", artist: "michael buble", popularity: 30},
-    {name: "last resort", artist: "papa roach", popularity: 50},
-];
+import { retrieveData } from '../Spotify.js';
+import { exportedSpotifyData } from '../Spotify.js'
+var spotifylogin = require('../imgs/SpotifyLogin.png')
+var lightningBoltImage = require('../imgs/lightningBolt.png')
 
 class Main extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            buttonPressed: false,   //indicates whether start button is pressed, will render player if it is
-            energy: 0,
+            startButtonPressed: false,   //indicates whether start button is pressed, will render player if it is //indicates whether spotify login has been initiated
+            energy: 0,                    //energy level of playlist, changes with user inputs
             songCounter: 0,
-            artist: SpotifyData[0].artist,
-            song: SpotifyData[0].name,
-            songUrl: ""            //energy level of playlist, changes with user inputs
+            artist: 'rick astley',
+            song: 'never going to give you up',
+            albumArt: 'http://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png',
+            songUrl: ""
         };
-    };
-
-    beginPH(){                     //activates with button click, will start spotify api calls and create playlist
-        console.log("Spotify Authorization");
-        console.log("Fetching Library...");
-        this.setState(Object.assign({}, this.state , {buttonPressed: true}));
     };
 
     changeEnergy (change) {        //using clicks on component 'Button', this increases or decreases energy level of playlist
@@ -80,56 +33,91 @@ class Main extends Component {
 
     queueSong (song) {
         console.log(song);
-        SpotifyData.splice(this.state.songCounter +1, 0,
-        {name: song, artist: ""})
+        exportedSpotifyData.songs.splice(this.state.songCounter +1, 0,
+        {name: song, artist: "", albumArt: 'http://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png'})
     };
 
     nextSong () {    // next song is trigged by a setTimout, so it runs every minute
             var thisCount = this.state.songCounter + 1
             this.setState(Object.assign({}, this.state, {
                 songCounter: thisCount,
-                song: SpotifyData[thisCount].name,
-                artist: SpotifyData[thisCount].artist
+                song: exportedSpotifyData.songs[thisCount].name,
+                artist: exportedSpotifyData.songs[thisCount].artist,
+                albumArt: exportedSpotifyData.songs[thisCount].albumArt
             }));
             var urlPromise = GetSongUrl(this.state.song, this.state.artist);
             urlPromise.then(function (url) {
                 this.setState(Object.assign({}, this.state, {songUrl: url}));
             }.bind(this));
+            console.log(thisCount)
             console.log("DRINK UP!!!");
         };
 
+    beginPH(){                     //activates with button click, will start spotify api calls and create playlist
+        setInterval(this.nextSong.bind(this), 15000);
+        setTimeout(this.nextSong.bind(this), 1)         // should skip first song (never gonna give you up), does not
+        this.setState(Object.assign({}, this.state , {startButtonPressed: true}));
+        };
+
+    getToken () {
+      var beginToken = window.location.hash.indexOf('=')
+      var endToken = window.location.hash.indexOf('&')
+      exports.bearerToken = window.location.hash.substr(beginToken + 1, endToken - 14)
+    }
+
     componentWillMount () {
-        this.setState(Object.assign({}, this.state, {songUrl: GetSongUrl(SpotifyData[this.state.songCounter].name, SpotifyData[this.state.songCounter].artist)
+        this.setState(Object.assign({}, this.state, {songUrl: GetSongUrl("never going to give you up", "rick astely ")
         }));
     }
 
     render() {
-        if (this.state.buttonPressed) {       // renders player and energy buttons if button is pressed
+        if (this.state.startButtonPressed) {       // renders player and energy buttons if button is pressed
             return (
                 <div id="background">
                     <div className="page">
+                      <div className="shadow">
                         <h1>PowerHour</h1>
                         <Timer />
-                        <Player onChange={this.nextSong.bind(this)} artist={this.state.artist} song={this.state.song} url={this.state.songUrl}/><br />
+                      </div>
+                        <Player artist={this.state.artist} song={this.state.song} url={this.state.songUrl} albumArt={this.state.albumArt}/><br />
                         <div className='buttons'>
                             <Button onClick={this.changeEnergy.bind(this)} value="turn up" change={1}/>
                             <Button onClick={this.changeEnergy.bind(this)} value="chill out" change={-1}/>
                         </div>
                         <Queue onChange={this.queueSong.bind(this)}/>
+
                     </div>
                 </div>
             )
-        } else {                             // only renders start button if not
+        }
+         if (window.location.hash !== ''){                             // only renders start button if not
+            this.getToken()
+            retrieveData()
             return (
                 <div id="background">
                     <div className="page">
-                        <h1>PowerHour</h1>
-                        <Start onClick={this.beginPH.bind(this)}/>  
+                      <div className="shadow">
+                      <h1>PowerHour</h1>
+                      <Start onClick={this.beginPH.bind(this)}/>
+                      </div>
                     </div>
                 </div>
             );
         };
+        if (window.location.hash == '') {
+           return (
+             <div id = "background">
+               <div className = "notPage">
+                  <a href = 'https://accounts.spotify.com/en/authorize?client_id=66f2f11387dc4b4abf5505a9cd4873c2&redirect_uri=http://localhost:3000&scope=playlist-read-private%20user-library-read&response_type=token'>
+                    <img id = 'sImage' src = {spotifylogin} width = "100" height = '100' />
+                  </a>
+               </div>
+             </div>
+          )
+        }
     };
 };
 
 export default Main;
+// skip first song, factor in energy for filter
+// make turn up and chill out buttons work

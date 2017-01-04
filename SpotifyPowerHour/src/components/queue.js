@@ -20,12 +20,12 @@ class Queue extends Component {
         var x = document.getElementsByName("search")   //sets value back to black after search enter
             x[0].value = ''
         this.props.onChange(this.state.value)  // need to set this.state.value equal to query in form
-    }; 
+    };
 
     render () {
         return (
             <form onSubmit={this.queue} className="searchbox">
-                    <input type="search" onChange={this.logSong} name="search" placeholder="add a song...." required="required" className="search" autoComplete="off" spellCheck="false"/>
+                    <input type="search" onChange={this.logSong} name="search" placeholder="Type 'song name by artist name'" required="required" className="search" autoComplete="off" spellCheck="false"/>
                     <input type="submit" className="submit" />
             </form>
         )

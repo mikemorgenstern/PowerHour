@@ -5,7 +5,7 @@ var lightningBoltImage = require('../imgs/lightningBolt.png')
 
 class Start extends Component {
 
-    
+
     beginPowerHour () {          // when clicked, the start button activates the <Button /> component's onClick function
         this.props.onClick();
     }

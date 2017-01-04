@@ -19,18 +19,34 @@
   line-height: 1;
 }
 
+.notPage{
+  margin-top: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  height: 20%;
+  width: 20%;
+}
+
+.shadow {
+    text-shadow: 5px 2px black;
+}
+
+.grey {
+  color: #808080;
+}
+
 h1 {
   margin-bottom: 20px
 }
 
 #background {
-    width: 100%; 
-    height: 100%; 
+    width: 100%;
+    height: 100%;
     position: fixed;
     background-image: url(../imgs/theswing.PNG);
     background-size: cover ;
-    left: 0px; 
-    top: 0px; 
+    left: 0px;
+    top: 0px;
     opacity: 0.8;
     z-index: -1; /* Ensure div tag stays behind content; -999 might work, too. */
 }
