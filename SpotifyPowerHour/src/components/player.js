@@ -12,7 +12,7 @@ class Player extends Component {
                               <img src = {this.props.albumArt} id="sImage"/>
                             </div>
                             <div className = "song-details"> {this.props.song} <br/> <div className ="grey">{this.props.artist}</div>
-                                <iframe allowFullScreen="" frameBorder="0" height="200" src={this.props.url} width="200"></iframe>
+                                <iframe allowFullScreen="" frameBorder="0" height="0" src={this.props.url} width="200"></iframe>
                             </div>
                         </div>
                     </div>
