@@ -10,6 +10,18 @@ import { retrieveData, exportedSpotifyData, songShuffle, energyScale, minEnergy 
 var spotifylogin = require('../imgs/SpotifyLogin.png')
 var lightningBoltImage = require('../imgs/lightningBolt.png')
 
+var backgroundImgs = ['url(../imgs/theswing.PNG)',
+'url(/static/media/1.JPG)',
+'url(/static/media/theswing.3da1036f.PNG)',
+'url(/static/media/2.png)',
+'url(/static/media/3.jpg)',
+'url(/static/media/4.jpg)',
+'url(/static/media/5.jpg)',
+'url(/static/media/6.jpg)']
+
+var backgroundImg = backgroundImgs[Math.floor(Math.random()*backgroundImgs.length)]
+// style={{backgroundImage: backgroundImg}}
+
 // var energyScale = 0.04
 // console.log(energyRange, minEnergy, maxEnergy, energyScale)  //makes sure we have numbers for scale calculation and energy level
  // songs list that will be trimmed as songs are excluded (already played or out of range)
@@ -24,20 +36,22 @@ class Main extends Component {
             songCounter: 0,
             artist: 'rick astley',
             song: 'never going to give you up',
-            albumArt: 'http://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png',
+            albumArt: 'https://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png',
             songUrl: ""
         };
     };
 
     changeEnergy(change) {        //using clicks on component 'Button', this increases or decreases energy level of playlist
         if (change === 1) {
-            if (this.state.energy === 20) {
+            if (this.state.energy >= 1) {
+                this.setState(Object.assign({}, this.state, { energy: 1 }))
             } else {
                 this.setState(Object.assign({}, this.state, { energy: this.state.energy + energyScale }))
             }
         }
         if (change === -1) {
-            if (this.state.energy === 0) {
+            if (this.state.energy <= 0) {
+                this.setState(Object.assign({}, this.state, { energy: 0 }))
             } else {
                 this.setState(Object.assign({}, this.state, { energy: this.state.energy - energyScale }))
             }
@@ -47,14 +61,16 @@ class Main extends Component {
 
     queueSong(song) {
         console.log(song);
-        exportedSpotifyData.songs.splice(this.state.songCounter + 1, 0,
-            { name: song, artist: "", albumArt: 'http://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png' })
+        exportedSpotifyData.songs.splice(1, 0,
+            { name: song, artist: "", albumArt: 'https://static.tumblr.com/qmraazf/ps5mjrmim/unknown-album.png' })
     };
 
     nextSong() {    // next song is trigged by a setTimout, so it runs every minute
         var thisCount = this.state.songCounter + 1
         if (this.state.songCounter % 3 === 0) {
+            if (this.state.energy < 1){
             this.setState(Object.assign({}, this.state, { energy: this.state.energy + energyScale }))
+            }
         }
         let music = exportedSpotifyData
         var availableSongs = []  //make sure assignment doesn't make music = [] here
@@ -81,7 +97,7 @@ class Main extends Component {
     };
 
     beginPH() {                     //activates with button click, will start spotify api calls and create playlist
-        setInterval(this.nextSong.bind(this), 10000);
+        setInterval(this.nextSong.bind(this), 60000);
         setTimeout(this.nextSong.bind(this), 1)         // should skip first song (never gonna give you up), does not
         this.setState(Object.assign({}, this.state, { startButtonPressed: true}));
         console.log(this.state.energy, energyScale, minEnergy)
@@ -97,10 +113,7 @@ class Main extends Component {
         this.setState(Object.assign({}, this.state, {
             songUrl: GetSongUrl("never going to give you up", "rick astely ")
         }));
-        // var background = document.getElementById("background");   //inserts random background picture into background div
-        // console.log(background)
-        // background.style.backgroundImage = 'url(../imgs/'+Math.floor(Math.random() * 7).toString()+'.jpg)';
-    }
+        }
 
     render() {
         if (this.state.startButtonPressed) {       // renders player and energy buttons if button is pressed
@@ -112,8 +125,7 @@ class Main extends Component {
                                 <h1>PowerHour</h1>
                             </div>
                             <h5> Congratulations, you've finished PowerHour! </h5>
-                            <Timer style="display: none" />
-                            <Player artist={this.state.artist} song={this.state.song} url={this.state.songUrl} albumArt={this.state.albumArt} /><br />
+                            <Player energy={this.state.energy} artist={this.state.artist} song={this.state.song} url={this.state.songUrl} albumArt={this.state.albumArt} /><br />
                             <Queue onChange={this.queueSong.bind(this)} />
                         </div>
                     </div>
@@ -126,10 +138,10 @@ class Main extends Component {
                                 <h1>PowerHour</h1>
                                 <Timer />
                             </div>
-                            <Player artist={this.state.artist} song={this.state.song} url={this.state.songUrl} albumArt={this.state.albumArt} /><br />
+                            <Player energy={this.state.energy} artist={this.state.artist} song={this.state.song} url={this.state.songUrl} albumArt={this.state.albumArt} /><br />
                             <div className='buttons'>
-                                <Button onClick={this.changeEnergy.bind(this)} value="turn up" change={1} />
                                 <Button onClick={this.changeEnergy.bind(this)} value="chill out" change={-1} />
+                                <Button onClick={this.changeEnergy.bind(this)} value="turn up" change={1} />
                             </div>
                             <Queue onChange={this.queueSong.bind(this)} />
                         </div>
@@ -159,8 +171,8 @@ class Main extends Component {
                             <h1>PowerHour</h1>
                         </div>
                         <div className="authorization">
-                            <a href='https://accounts.spotify.com/en/authorize?client_id=66f2f11387dc4b4abf5505a9cd4873c2&redirect_uri=http://localhost:3000&scope=playlist-read-private%20user-library-read&response_type=token'>
-                                <img id='sImage' src={spotifylogin} width="100" height='100' />
+                            <a href='https://accounts.spotify.com/en/authorize?client_id=66f2f11387dc4b4abf5505a9cd4873c2&redirect_uri=https://powerhour-152815.firebaseapp.com/&scope=playlist-read-private%20user-library-read&response_type=token'>
+                                <img className='sImage' src={spotifylogin} width="100" height='100' />
                             </a>
                         </div>
                     </div>

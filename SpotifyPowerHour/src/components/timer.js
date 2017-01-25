@@ -53,6 +53,7 @@ class Timer extends Component {
                 {this.state.second}
                 </div>
             </div>
+            
         );
     }
 }

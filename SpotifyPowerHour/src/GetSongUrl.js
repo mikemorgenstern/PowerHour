@@ -7,6 +7,6 @@ export function GetSongUrl(song, artist) {
       return res.json() ;
     }).then(function(json) {
         /* return "https://www.youtube.com/embed/watch?v="+json.items[0].id.videoId+"?autoplay=1" */
-        return "http://www.youtube.com/embed/"+json.items[0].id.videoId+"?autoplay=1&start=40"
+        return "https://www.youtube.com/embed/"+json.items[0].id.videoId+"?autoplay=1&start=40"
     });
 }

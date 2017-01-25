@@ -17,8 +17,8 @@ class Queue extends Component {
     queue (e) {
         console.log(this.state.value)
         e.preventDefault();   //prevents redirect with new URL
-        var x = document.getElementsByName("search")   //sets value back to black after search enter
-            x[0].value = ''
+        var x = document.getElementsByName("search")   //sets value back to blank after search enter
+            x[0].value = 'song added to queue!'
         this.props.onChange(this.state.value)  // need to set this.state.value equal to query in form
     };
 
