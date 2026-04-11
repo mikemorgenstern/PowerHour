@@ -36,7 +36,7 @@ const TRACKS_WITH_NULL = {
     added_at: '2023-01-01T00:00:00Z',
     added_by: { id: 'user', external_urls: { spotify: '' } },
     is_local: false,
-    track: null, // This is what happens with bad fields param
+    item: null, // This is what happens with bad fields param
   })),
   limit: 100, next: null, offset: 0, previous: null, total: 5,
 };
@@ -46,7 +46,7 @@ const TRACKS_NORMAL = {
     added_at: '2023-01-01T00:00:00Z',
     added_by: { id: 'user', external_urls: { spotify: '' } },
     is_local: false,
-    track: MOCK_TRACK(i + 1),
+    item: MOCK_TRACK(i + 1),
   })),
   limit: 100, next: null, offset: 0, previous: null, total: 20,
 };
@@ -56,7 +56,7 @@ const PLAYLISTS_WITH_ZERO_TOTALS = [
     id: 'pl0', name: 'Discover Weekly',
     description: '', images: [],
     owner: { id: 'spotify', display_name: 'Spotify', external_urls: { spotify: '' } },
-    tracks: { total: 0, href: '' }, // Algorithmic playlist — zero total
+    items: { total: 0, href: '' }, tracks: { total: 0, href: '' },
     public: true, collaborative: false,
     external_urls: { spotify: '' }, snapshot_id: 'snap0',
   },
@@ -64,7 +64,7 @@ const PLAYLISTS_WITH_ZERO_TOTALS = [
     id: 'pl1', name: 'My Party Mix',
     description: '', images: [{ url: 'https://picsum.photos/300', width: 300, height: 300 }],
     owner: { id: 'testuser', display_name: 'Test User', external_urls: { spotify: '' } },
-    tracks: { total: 25, href: '' },
+    items: { total: 25, href: '' }, tracks: { total: 25, href: '' },
     public: true, collaborative: false,
     external_urls: { spotify: '' }, snapshot_id: 'snap1',
   },
@@ -89,9 +89,9 @@ test.describe('Edge cases', () => {
       json: { items: PLAYLISTS_WITH_ZERO_TOTALS, limit: 50, next: null, offset: 0, previous: null, total: 2 },
     }));
     // Normal tracks for pl1
-    await page.route('https://api.spotify.com/v1/playlists/pl1/tracks*', r => r.fulfill({ json: TRACKS_NORMAL }));
+    await page.route('https://api.spotify.com/v1/playlists/pl1/items*', r => r.fulfill({ json: TRACKS_NORMAL }));
     // Empty for pl0
-    await page.route('https://api.spotify.com/v1/playlists/pl0/tracks*', r => r.fulfill({ json: TRACKS_WITH_NULL }));
+    await page.route('https://api.spotify.com/v1/playlists/pl0/items*', r => r.fulfill({ json: TRACKS_WITH_NULL }));
 
     await page.goto('http://127.0.0.1:5173/select');
     await page.waitForTimeout(2000);
@@ -99,12 +99,12 @@ test.describe('Edge cases', () => {
     const bodyText = await page.textContent('body') ?? '';
     console.log('ZERO TOTAL - body:', bodyText.substring(0, 400));
 
-    // pl0 shows 0 tracks — still visible and not hardcoded-disabled
+    // pl0 (owner: 'spotify') should be HIDDEN — Dev Mode filters non-owned playlists
     const pl0 = page.locator('button').filter({ hasText: 'Discover Weekly' });
-    await expect(pl0).toBeVisible();
-    console.log('Discover Weekly card visible: true');
+    await expect(pl0).not.toBeVisible();
+    console.log('Discover Weekly correctly hidden (non-owned playlist)');
 
-    // pl1 shows 25 tracks — should be clickable and navigate
+    // pl1 (owner: 'testuser') shows 25 tracks — should be clickable and navigate
     const pl1 = page.locator('button').filter({ hasText: 'My Party Mix' });
     await expect(pl1).toBeVisible();
     await pl1.click();
@@ -133,7 +133,7 @@ test.describe('Edge cases', () => {
     }));
     // First call returns null tracks (simulates bad fields param)
     let callCount = 0;
-    await page.route('https://api.spotify.com/v1/playlists/pl1/tracks*', r => {
+    await page.route('https://api.spotify.com/v1/playlists/pl1/items*', r => {
       callCount++;
       if (callCount === 1) {
         r.fulfill({ json: TRACKS_WITH_NULL }); // first: all null → 0 tracks
@@ -175,7 +175,7 @@ test.describe('Edge cases', () => {
     }));
 
     let callCount = 0;
-    await page.route('https://api.spotify.com/v1/playlists/pl1/tracks*', r => {
+    await page.route('https://api.spotify.com/v1/playlists/pl1/items*', r => {
       callCount++;
       if (callCount === 1) {
         r.fulfill({ status: 400, json: { error: { status: 400, message: 'Bad field parameter' } } });
@@ -213,7 +213,7 @@ test.describe('Edge cases', () => {
     await page.route('https://api.spotify.com/v1/me/playlists*', r => r.fulfill({
       json: { items: [PLAYLISTS_WITH_ZERO_TOTALS[1]], limit: 50, next: null, offset: 0, previous: null, total: 1 },
     }));
-    await page.route('https://api.spotify.com/v1/playlists/pl1/tracks*', r => r.fulfill({ json: TRACKS_NORMAL }));
+    await page.route('https://api.spotify.com/v1/playlists/pl1/items*', r => r.fulfill({ json: TRACKS_NORMAL }));
 
     // Mock fetch for preview URLs to avoid actual network calls
     await page.route('https://p.scdn.co/**', r => {
@@ -258,7 +258,7 @@ test.describe('Edge cases', () => {
     await page.route('https://api.spotify.com/v1/me/playlists*', r => r.fulfill({
       json: { items: [PLAYLISTS_WITH_ZERO_TOTALS[1]], limit: 50, next: null, offset: 0, previous: null, total: 1 },
     }));
-    await page.route('https://api.spotify.com/v1/playlists/pl1/tracks*', r => r.fulfill({ json: TRACKS_NORMAL }));
+    await page.route('https://api.spotify.com/v1/playlists/pl1/items*', r => r.fulfill({ json: TRACKS_NORMAL }));
 
     await page.goto('http://127.0.0.1:5173/select');
     await page.waitForTimeout(2000);

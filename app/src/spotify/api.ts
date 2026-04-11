@@ -198,9 +198,16 @@ export async function getLikedSongs(limit = 50, offset = 0): Promise<{ tracks: T
   });
   const response = await fetchWithAuth(`${BASE_URL}/me/tracks?${params}`);
   const data: SpotifyPaginatedResponse<SpotifyPlaylistTrackItem> = await response.json();
-  const tracks = (data.items ?? [])
-    .filter(item => item.track != null && !item.track.is_local)
-    .map(item => mapTrack(item.track!));
+  const tracks: Track[] = [];
+  for (const entry of data.items ?? []) {
+    // Handle both `track` (current /me/tracks format) and `item` (if Spotify renames it)
+    const trackData = entry.item ?? entry.track;
+    if (!trackData) continue;
+    const t = trackData as SpotifyTrackResponse;
+    if (t.is_local) continue;
+    if (!t.artists) continue;
+    tracks.push(mapTrack(t));
+  }
   return { tracks, total: data.total ?? 0 };
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getUserPlaylists, getPlaylistTracks, getUserTopTracks, getLikedSongs } from '../../spotify/api';
+import { getUserPlaylists, getPlaylistTracks, getUserTopTracks, getLikedSongs, getUserProfile } from '../../spotify/api';
 import { awaitPrefetch } from '../../spotify/prefetch';
 import { useSpotifyStore } from '../../stores/spotifyStore';
 import { useGameStore } from '../../stores/gameStore';
@@ -215,6 +215,7 @@ export default function PlaylistPicker() {
   const navigate = useNavigate();
   const displayName = useSpotifyStore((s) => s.displayName);
   const userId = useSpotifyStore((s) => s.userId);
+  const setProfile = useSpotifyStore((s) => s.setProfile);
   const setTracks = useGameStore((s) => s.setTracks);
 
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
@@ -232,11 +233,21 @@ export default function PlaylistPicker() {
 
     async function fetchPlaylists() {
       try {
+        // Ensure we have userId (may be null if user navigated directly to /select)
+        let resolvedUserId = userId;
+        if (!resolvedUserId) {
+          try {
+            const profile = await getUserProfile();
+            setProfile({ userId: profile.id, displayName: profile.display_name, isPremium: profile.product === 'premium' });
+            resolvedUserId = profile.id;
+          } catch { /* auth will redirect to login */ }
+        }
+
         // If a prefetch is in flight (started during auth), wait for it
         await awaitPrefetch();
 
         // Check cache (populated by prefetch or previous visit)
-        const cached = userId ? getCachedPlaylists(userId) : null;
+        const cached = resolvedUserId ? getCachedPlaylists(resolvedUserId) : null;
         if (cached) {
           if (!cancelled) {
             setPlaylists(cached.playlists);
@@ -253,7 +264,7 @@ export default function PlaylistPicker() {
         const total = first.total;
 
         if (!cancelled) {
-          const ownedFirst = first.playlists.filter(p => p.ownerId === userId);
+          const ownedFirst = first.playlists.filter(p => p.ownerId === resolvedUserId);
           setPlaylists(ownedFirst);
           setTotalFollowed(first.playlists.length - ownedFirst.length);
           setLoading(false); // Show first batch NOW
@@ -270,32 +281,32 @@ export default function PlaylistPicker() {
 
           if (!cancelled) {
             const allRemaining = remaining.flatMap(r => r.playlists);
-            const ownedRemaining = allRemaining.filter(p => p.ownerId === userId);
+            const ownedRemaining = allRemaining.filter(p => p.ownerId === resolvedUserId);
             const followedRemaining = allRemaining.length - ownedRemaining.length;
 
             setPlaylists(prev => [...prev, ...ownedRemaining]);
             setTotalFollowed(prev => prev + followedRemaining);
 
             // Cache the complete result
-            if (userId) {
-              const allOwned = [...first.playlists.filter(p => p.ownerId === userId), ...ownedRemaining];
-              const totalFollowedFinal = (first.playlists.length - first.playlists.filter(p => p.ownerId === userId).length) + followedRemaining;
+            if (resolvedUserId) {
+              const allOwned = [...first.playlists.filter(p => p.ownerId === resolvedUserId), ...ownedRemaining];
+              const totalFollowedFinal = (first.playlists.length - first.playlists.filter(p => p.ownerId === resolvedUserId).length) + followedRemaining;
               setCachedPlaylists({
                 playlists: allOwned,
                 totalFollowed: totalFollowedFinal,
                 timestamp: Date.now(),
-                userId,
+                userId: resolvedUserId,
               });
             }
           }
-        } else if (!cancelled && userId) {
+        } else if (!cancelled && resolvedUserId) {
           // Only 1 page — cache it
-          const owned = first.playlists.filter(p => p.ownerId === userId);
+          const owned = first.playlists.filter(p => p.ownerId === resolvedUserId);
           setCachedPlaylists({
             playlists: owned,
             totalFollowed: first.playlists.length - owned.length,
             timestamp: Date.now(),
-            userId,
+            userId: resolvedUserId!,
           });
         }
 

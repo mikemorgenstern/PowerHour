@@ -47,7 +47,8 @@ const MOCK_PLAYLISTS = Array.from({ length: 5 }, (_, i) => ({
   description: '',
   images: [{ url: `https://picsum.photos/seed/pl${i}/300/300`, width: 300, height: 300 }],
   owner: { id: 'testuser', display_name: 'Test User', external_urls: { spotify: '' } },
-  tracks: { total: 20 + i * 5, href: `https://api.spotify.com/v1/playlists/playlist${i}/tracks` },
+  items: { total: 20 + i * 5, href: `https://api.spotify.com/v1/playlists/playlist${i}/items` },
+  tracks: { total: 20 + i * 5, href: `https://api.spotify.com/v1/playlists/playlist${i}/items` },
   public: true,
   collaborative: false,
   external_urls: { spotify: '' },
@@ -55,12 +56,12 @@ const MOCK_PLAYLISTS = Array.from({ length: 5 }, (_, i) => ({
 }));
 
 const MOCK_PLAYLIST_TRACKS = {
-  href: 'https://api.spotify.com/v1/playlists/playlist0/tracks',
+  href: 'https://api.spotify.com/v1/playlists/playlist0/items',
   items: Array.from({ length: 20 }, (_, i) => ({
     added_at: '2023-01-01T00:00:00Z',
     added_by: { id: 'testuser', external_urls: { spotify: '' } },
     is_local: false,
-    track: MOCK_TRACK(i + 1),
+    item: MOCK_TRACK(i + 1),
   })),
   limit: 100,
   next: null,
@@ -73,11 +74,17 @@ const MOCK_PLAYLIST_TRACKS = {
 
 async function injectAuth(page: Page) {
   await page.addInitScript(
-    ({ token, expiry }) => {
+    ({ token, expiry, userId }) => {
       localStorage.setItem('spotify_access_token', token);
       localStorage.setItem('spotify_token_expiry', expiry);
+      // Inject Zustand store state so PlaylistPicker can filter by userId
+      (window as Record<string, unknown>).__INJECT_SPOTIFY_PROFILE__ = {
+        userId,
+        displayName: 'Test User',
+        isPremium: true,
+      };
     },
-    { token: MOCK_TOKEN, expiry: MOCK_EXPIRY },
+    { token: MOCK_TOKEN, expiry: MOCK_EXPIRY, userId: 'testuser' },
   );
 }
 
@@ -101,7 +108,10 @@ async function mockSpotifyAPIs(page: Page) {
     });
   });
 
-  // Playlist tracks (any playlist id)
+  // Playlist tracks/items (any playlist id) — support both endpoints
+  await page.route('https://api.spotify.com/v1/playlists/*/items*', (route) => {
+    route.fulfill({ json: MOCK_PLAYLIST_TRACKS });
+  });
   await page.route('https://api.spotify.com/v1/playlists/*/tracks*', (route) => {
     route.fulfill({ json: MOCK_PLAYLIST_TRACKS });
   });
