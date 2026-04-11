@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-pink: #ff2d8a;
+  --color-neon-blue: #00d4ff;
+  --color-neon-green: #39ff14;
+  --color-neon-purple: #b44aff;
+  --color-neon-yellow: #ffe600;
+  --color-surface: #0a0a0f;
+  --color-surface-light: #14141f;
+  --color-surface-lighter: #1e1e2e;
+  --color-text-primary: #f0f0f5;
+  --color-text-secondary: #8888a0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Game-screen keyframes ────────────────────────────── */
+
+/* Gentle floating for album art */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* Progress ring urgency pulse */
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50%      { opacity: 0.7; filter: brightness(1.4); }
+}
+
+/* Countdown digit pop-in */
+@keyframes digit-pop {
+  0%   { transform: scale(1.8); opacity: 0; }
+  30%  { transform: scale(0.95); opacity: 1; }
+  50%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Pre-game background pulse */
+@keyframes bg-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
